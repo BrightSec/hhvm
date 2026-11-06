@@ -208,6 +208,13 @@ readwbmp (int (*getin) (void *in), void *in, Wbmp ** return_wbmp)
       for (col = 0; col < wbmp->width;)
   {
     byte = getin (in);
+    if (byte < 0)
+      {
+        /* truncated input */
+        gdFree (wbmp->bitmap);
+        gdFree (wbmp);
+        return (-1);
+      }
 
     for (pel = 7; pel >= 0; pel--)
       {

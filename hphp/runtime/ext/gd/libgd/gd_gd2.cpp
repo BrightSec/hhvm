@@ -310,8 +310,9 @@ gdImagePtr gdImageCreateFromGd2Ctx (gdIOCtxPtr in)
   }
 
   /* Read the data... */
-  for (cy = 0; (cy < ncy); cy++) {
-    for (cx = 0; (cx < ncx); cx++) {
+  /* Chunks lying entirely outside the image carry no pixels; don't iterate over them. */
+  for (cy = 0; (cy < ncy) && ((long)cy * cs < im->sy); cy++) {
+    for (cx = 0; (cx < ncx) && ((long)cx * cs < im->sx); cx++) {
       ylo = cy * cs;
       yhi = ylo + cs;
       if (yhi > im->sy) {

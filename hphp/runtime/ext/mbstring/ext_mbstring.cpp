@@ -1553,6 +1553,31 @@ static Variant php_mb_numericentity_exec(const OptString& str,
   }
   mapsize /= 4;
 
+  if (type == 1) {
+    /* The decoder accumulates entity values in a signed int without an
+     * overflow check, so refuse entities whose digit run cannot fit. */
+    const unsigned char* p = string.val;
+    const unsigned char* end = p + string.len;
+    while (p + 1 < end) {
+      if (p[0] != '&' || p[1] != '#') { ++p; continue; }
+      p += 2;
+      bool hex = p < end && (*p == 'x' || *p == 'X');
+      if (hex) ++p;
+      size_t digits = 0;
+      while (p < end && ((*p >= '0' && *p <= '9') ||
+                         (hex && ((*p >= 'a' && *p <= 'f') ||
+                                  (*p >= 'A' && *p <= 'F'))))) {
+        ++digits;
+        ++p;
+      }
+      if (digits > (hex ? 7u : 9u)) {
+        req::free(iconvmap);
+        raise_warning("Numeric entity too large");
+        return false;
+      }
+    }
+  }
+
   ret = mbfl_html_numeric_entity(&string, &result, iconvmap, mapsize, type);
   req::free(iconvmap);
   if (ret != nullptr) {
