@@ -905,6 +905,12 @@ int doshn(struct magic_set* ms, int clazz, int swap, int fd, off_t off, int num,
     /* Things we can determine when we seek */
     switch (xsh_type) {
     case SHT_NOTE:
+      if ((uint64_t)xsh_size > (uint64_t)fsize ||
+          (uint64_t)xsh_offset > (uint64_t)fsize ||
+          (uint64_t)xsh_offset + (uint64_t)xsh_size > (uint64_t)fsize) {
+        /* Section extends past the end of the file; ignore it */
+        continue;
+      }
       nbuf = emalloc((size_t)xsh_size);
       if ((noff = FINFO_LSEEK_FUNC(fd, (off_t)xsh_offset, SEEK_SET)) ==
           (off_t)-1) {
